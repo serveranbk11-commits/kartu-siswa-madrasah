@@ -437,6 +437,9 @@
                 <button onclick="switchPage('input')" id="nav-input" class="nav-item w-full">
                     <i class="fas fa-id-badge w-6"></i> Input & Cetak
                 </button>
+                <button onclick="switchPage('database')" id="nav-database" class="nav-item w-full">
+                    <i class="fas fa-users w-6"></i> Data Siswa
+                </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="nav-item w-full">
                     <i class="fas fa-cogs w-6"></i> Pengaturan
                 </button>
@@ -469,10 +472,10 @@
                     <div class="glass-panel p-6 border-l-4 border-white">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-green-100 text-sm font-medium">Total Kartu Dicetak</p>
-                                <h3 class="text-3xl font-bold text-white mt-1">128</h3>
+                                <p class="text-green-100 text-sm font-medium">Total Siswa Terdaftar</p>
+                                <h3 id="dash-total-siswa" class="text-3xl font-bold text-white mt-1">1</h3>
                             </div>
-                            <div class="p-3 bg-white/20 rounded-lg"><i class="fas fa-print text-white"></i></div>
+                            <div class="p-3 bg-white/20 rounded-lg"><i class="fas fa-users text-white"></i></div>
                         </div>
                     </div>
                     <div class="glass-panel p-6 border-l-4 border-white">
@@ -500,7 +503,7 @@
                         <i class="fas fa-id-badge text-5xl text-white"></i>
                     </div>
                     <h3 class="text-xl text-white font-bold mb-2">Mulai Membuat Kartu?</h3>
-                    <p class="text-green-100 mb-6 max-w-md">Beralih ke menu <b>Input & Cetak</b> untuk mulai mengisi data siswa dan mencetak atau mengunduh kartu pelajar.</p>
+                    <p class="text-green-100 mb-6 max-w-md">Beralih ke menu <b>Input & Cetak</b> atau kelola daftar siswa di menu <b>Data Siswa</b>.</p>
                     <button onclick="switchPage('input')" class="btn-3d px-8 py-3 rounded-full font-bold shadow-lg">
                         <i class="fas fa-arrow-right mr-2"></i> Pergi ke Form Input
                     </button>
@@ -513,11 +516,13 @@
                 <!-- COLUMN 1: FORM INPUT -->
                 <div class="w-full lg:w-5/12 flex flex-col h-full">
                     <div class="glass-panel p-6 flex-1 overflow-y-auto scroll-hide">
-                        <h3 class="text-xl font-bold text-white mb-4 border-b border-white/20 pb-2 drop-shadow-md">
-                            <i class="fas fa-user-edit mr-2"></i> Data Siswa
+                        <h3 class="text-xl font-bold text-white mb-4 border-b border-white/20 pb-2 drop-shadow-md flex justify-between items-center">
+                            <span><i class="fas fa-user-edit mr-2"></i> Form Data Siswa</span>
+                            <span id="form-mode-badge" class="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded font-bold hidden">Mode Edit</span>
                         </h3>
                         
-                        <form id="student-form" class="space-y-4">
+                        <form id="student-form" onsubmit="saveStudentData(event)" class="space-y-4">
+                            <input type="hidden" id="in-id">
                             <div>
                                 <label class="block text-sm font-medium text-white mb-1 drop-shadow-sm">Nama Lengkap</label>
                                 <input type="text" id="in-nama" oninput="updatePreview()" class="glass-input w-full px-4 py-2" placeholder="Contoh: Ahmad Syauqi" required>
@@ -558,8 +563,8 @@
                                 <button type="button" onclick="resetForm()" class="px-4 py-2 rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/30 transition-colors w-1/3">
                                     <i class="fas fa-sync-alt"></i> Reset
                                 </button>
-                                <button type="button" onclick="showNotification('Data berhasil disimpan!', 'success')" class="btn-3d flex-1 py-2 rounded-xl font-semibold">
-                                    <i class="fas fa-save mr-1"></i> Simpan
+                                <button type="submit" class="btn-3d flex-1 py-2 rounded-xl font-semibold">
+                                    <i class="fas fa-save mr-1"></i> Simpan ke Daftar
                                 </button>
                             </div>
                         </form>
@@ -587,14 +592,13 @@
                         </div>
                     </div>
 
-                    <!-- CARD WRAPPER (The actual ID Card to be exported) -->
+                    <!-- CARD WRAPPER -->
                     <div id="card-export-area" class="p-4 bg-white/10 rounded-2xl backdrop-blur-md border border-white/30 shadow-2xl overflow-auto w-full flex-1 flex items-center justify-center">
                         
                         <!-- FRONT CARD -->
                         <div id="card-front" class="id-card-wrapper theme-emerald transition-colors flex flex-col relative">
                             <div class="id-card-bg-pattern"></div>
                             
-                            <!-- Header / Kop -->
                             <div class="card-header-shape flex items-center justify-between flex-shrink-0">
                                 <img id="out-logo-kiri" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Lambang_Kementerian_Agama.png" onerror="this.onerror=null;this.src='https://placehold.co/200x200/16a34a/ffffff?text=Kemenag'" class="w-10 h-10 object-contain bg-white rounded-full p-1" alt="Logo Kemenag">
                                 <div class="flex-1 px-1">
@@ -605,12 +609,10 @@
                                 <img id="out-logo-kanan" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Lambang_Kementerian_Agama.png" onerror="this.onerror=null;this.src='https://placehold.co/200x200/16a34a/ffffff?text=Logo'" class="w-10 h-10 object-contain bg-white rounded-full p-1 opacity-0" alt="Logo Sekolah">
                             </div>
 
-                            <!-- Title -->
                             <div class="card-title">
                                 <h3 class="text-green-800 font-bold text-sm uppercase border-b-2 border-green-500 inline-block px-4 pb-0.5">Kartu Tanda Siswa</h3>
                             </div>
 
-                            <!-- Content Body -->
                             <div class="card-body">
                                 <div class="photo-container">
                                     <img id="out-foto" src="https://via.placeholder.com/150x200?text=FOTO+3x4" alt="Foto Siswa">
@@ -642,7 +644,6 @@
                                 </div>
                             </div>
 
-                            <!-- Front Footer -->
                             <div class="front-footer">
                                 <div id="out-qr" class="qr-placeholder flex items-center justify-center overflow-hidden"></div>
                             </div>
@@ -704,7 +705,37 @@
                 </div>
             </div>
 
-            <!-- PAGE 3: PENGATURAN -->
+            <!-- PAGE 3: DATA SISWA (DATABASE) -->
+            <div id="page-database" class="page-section hidden h-full overflow-y-auto scroll-hide pb-10">
+                <div class="glass-panel p-8 max-w-5xl mx-auto mt-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-white/20 pb-4 gap-4">
+                        <h2 class="text-2xl font-bold text-white"><i class="fas fa-users mr-2"></i> Daftar Siswa Terdaftar</h2>
+                        <button onclick="switchPage('input'); resetForm();" class="btn-3d px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2">
+                            <i class="fas fa-user-plus"></i> Tambah Siswa Baru
+                        </button>
+                    </div>
+
+                    <div class="bg-white/90 rounded-2xl p-4 shadow-xl overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-green-100 text-green-900 border-b-2 border-green-300">
+                                    <th class="p-3">No</th>
+                                    <th class="p-3">Foto</th>
+                                    <th class="p-3">Nama Lengkap</th>
+                                    <th class="p-3">NISN/NISM</th>
+                                    <th class="p-3">TTL</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-table-body" class="divide-y divide-gray-200 text-gray-800">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 4: PENGATURAN -->
             <div id="page-settings" class="page-section hidden h-full overflow-y-auto scroll-hide pb-10">
                 <div class="glass-panel p-8 max-w-4xl mx-auto mt-4">
                     <h2 class="text-2xl font-bold text-white mb-6 border-b border-white/20 pb-4"><i class="fas fa-cogs mr-2"></i> Pengaturan Desain & Template Kartu</h2>
@@ -817,7 +848,7 @@
                 </div>
             </div>
 
-            <!-- PAGE 4: AKUN PENGGUNA -->
+            <!-- PAGE 5: AKUN PENGGUNA -->
             <div id="page-account" class="page-section hidden h-full overflow-y-auto pb-10">
                 <div class="glass-panel p-8 max-w-xl mx-auto mt-10">
                     <div class="text-center mb-8">
@@ -871,8 +902,23 @@
         let isPortrait = true;
         let activeThemeName = 'Green Emerald';
 
+        // Mock Database Siswa Awal
+        let studentsData = [
+            {
+                id: 1,
+                nama: 'Ahmad Syauqi',
+                nisn: '0012345678',
+                jk: 'Laki-Laki',
+                ttl: 'Jakarta, 12 Agustus 2005',
+                alamat: 'Jl. Sudirman No. 10',
+                foto: 'https://via.placeholder.com/150x200?text=FOTO+3x4'
+            }
+        ];
+
         window.onload = () => {
             document.getElementById('set-rules').value = document.getElementById('out-rules').innerHTML.trim();
+            renderStudentTable();
+            updatePreview();
         };
 
         // --- NAVIGATION & ROUTING ---
@@ -889,6 +935,8 @@
 
             if (pageId === 'input') {
                 setTimeout(() => updatePreview(), 100);
+            } else if (pageId === 'database') {
+                renderStudentTable();
             }
         }
 
@@ -943,6 +991,104 @@
             msgEl.innerText = message;
             toast.classList.remove('translate-x-[150%]');
             setTimeout(() => { toast.classList.add('translate-x-[150%]'); }, 3000);
+        }
+
+        // --- DATABASE & CRUD SISWA ---
+        function renderStudentTable() {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = '';
+            
+            document.getElementById('dash-total-siswa').innerText = studentsData.length;
+
+            if (studentsData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500">Belum ada data siswa terdaftar. Silakan tambah data baru.</td></tr>`;
+                return;
+            }
+
+            studentsData.forEach((student, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-green-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold">${index + 1}</td>
+                    <td class="p-3"><img src="${student.foto}" class="w-10 h-12 object-cover rounded border" alt="Foto"></td>
+                    <td class="p-3 font-bold text-green-900">${student.nama}</td>
+                    <td class="p-3 font-mono">${student.nisn}</td>
+                    <td class="p-3 text-xs">${student.ttl}</td>
+                    <td class="p-3 text-center space-x-2">
+                        <button onclick="loadStudentToForm(${student.id})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors" title="Edit & Cetak">
+                            <i class="fas fa-edit mr-1"></i> Edit / Cetak
+                        </button>
+                        <button onclick="deleteStudent(${student.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveStudentData(e) {
+            e.preventDefault();
+            const id = document.getElementById('in-id').value;
+            const nama = document.getElementById('in-nama').value;
+            const nisn = document.getElementById('in-nisn').value;
+            const jk = document.getElementById('in-jk').value;
+            const ttl = document.getElementById('in-ttl').value;
+            const alamat = document.getElementById('in-alamat').value;
+            const foto = document.getElementById('out-foto').src;
+
+            if (id) {
+                // Update existing
+                const index = studentsData.findIndex(s => s.id == id);
+                if (index !== -1) {
+                    studentsData[index] = { id: Number(id), nama, nisn, jk, ttl, alamat, foto };
+                }
+                showNotification('Data siswa berhasil diperbarui!', 'success');
+            } else {
+                // Insert new
+                const newStudent = {
+                    id: Date.now(),
+                    nama, nisn, jk, ttl, alamat, foto
+                };
+                studentsData.push(newStudent);
+                showNotification('Data siswa baru berhasil disimpan!', 'success');
+            }
+
+            renderStudentTable();
+            switchPage('database');
+        }
+
+        function loadStudentToForm(id) {
+            const student = studentsData.find(s => s.id == id);
+            if (student) {
+                document.getElementById('in-id').value = student.id;
+                document.getElementById('in-nama').value = student.nama;
+                document.getElementById('in-nisn').value = student.nisn;
+                document.getElementById('in-jk').value = student.jk;
+                document.getElementById('in-ttl').value = student.ttl;
+                document.getElementById('in-alamat').value = student.alamat;
+                document.getElementById('out-foto').src = student.foto;
+
+                document.getElementById('form-mode-badge').classList.remove('hidden');
+                switchPage('input');
+                updatePreview();
+            }
+        }
+
+        function deleteStudent(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
+                studentsData = studentsData.filter(s => s.id != id);
+                renderStudentTable();
+                showNotification('Data siswa berhasil dihapus', 'info');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('student-form').reset();
+            document.getElementById('in-id').value = '';
+            document.getElementById('out-foto').src = 'https://via.placeholder.com/150x200?text=FOTO+3x4';
+            document.getElementById('form-mode-badge').classList.add('hidden');
+            updatePreview();
         }
 
         // --- TEMPLATE BACKGROUND SELECTOR ---
@@ -1093,12 +1239,6 @@
             document.getElementById('out-rules').innerHTML = document.getElementById('set-rules').value;
 
             showNotification('Pengaturan desain berhasil disimpan!', 'success');
-        }
-
-        function resetForm() {
-            document.getElementById('student-form').reset();
-            document.getElementById('out-foto').src = 'https://via.placeholder.com/150x200?text=FOTO+3x4';
-            updatePreview();
         }
 
         // --- EXPORT LOGIC ---
