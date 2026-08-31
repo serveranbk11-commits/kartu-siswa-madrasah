@@ -190,8 +190,8 @@
         }
         
         .landscape .card-header-shape { padding: 8px 20px; }
-        .landscape #out-kop-1 { font-size: 0.7rem; }
-        .landscape #out-kop-2 { font-size: 1rem; }
+        .landscape #out-kop-1, .landscape #out-kop-1-back { font-size: 0.7rem; }
+        .landscape #out-kop-2, .landscape #out-kop-2-back { font-size: 1rem; }
 
         .card-title {
             text-align: center;
@@ -654,17 +654,17 @@
                             <div class="id-card-bg-pattern"></div>
                             
                             <div class="back-header text-white text-center py-3 font-bold text-sm tracking-wide z-10 shadow-sm flex-shrink-0">
-                                TATA TERTIB SISWA
+                                PERATURAN PEMEGANG KARTU
                             </div>
                             
                             <div class="back-content-wrapper flex-1">
                                 <div class="rules-section">
                                     <ul id="out-rules" class="text-[0.65rem] text-gray-800 text-justify list-decimal pl-4 space-y-2 leading-relaxed font-medium">
                                         <li>Kartu ini adalah identitas resmi siswa/i madrasah dan harus dibawa setiap saat.</li>
-                                        <li>Wajib dikalungkan/dipakai selama jam pelajaran dan kegiatan resmi madrasah.</li>
+                                        <li>Kartu ini tidak boleh digunakan diluar kepentingan madrasah.</li>
                                         <li>Apabila kartu hilang atau rusak, segera melapor kepada TU.</li>
                                         <li>Kartu ini tidak boleh dipindahtangankan.</li>
-                                        <li>Berlaku juga sebagai kartu perpustakaan.</li>
+                                        <li>Kartu ini berlaku selama menjadi siswa di Madrasah ini.</li>
                                     </ul>
                                 </div>
 
@@ -694,14 +694,85 @@
 
                     <!-- Action Buttons -->
                     <div class="glass-panel p-3 mt-1 flex flex-wrap gap-3 justify-center w-full max-w-lg shrink-0">
-                        <button onclick="exportCard('png')" class="btn-3d px-6 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2">
-                            <i class="fas fa-image"></i> Unduh PNG
-                        </button>
-                        <button onclick="showNotification('Fitur PDF menggunakan jsPDF (Mockup)', 'info')" class="bg-white text-green-700 hover:bg-gray-100 border border-green-600 px-6 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2 shadow-lg transition-colors">
-                            <i class="fas fa-file-pdf"></i> Cetak PDF
+                        <button onclick="exportFullCardPackage()" class="btn-3d px-6 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-file-download"></i> Unduh Satu Paket (Depan & Belakang)
                         </button>
                     </div>
 
+                </div>
+            </div>
+
+            <!-- HIDDEN CONTAINER FOR EXPORT PACKAGE (SIDE BY SIDE) -->
+            <div id="export-package-container" style="position: absolute; left: -9999px; top: -9999px; display: flex; gap: 40px; background: white; padding: 40px; border-radius: 20px;">
+                <!-- Front Clone -->
+                <div id="export-clone-front" class="id-card-wrapper theme-emerald flex flex-col relative" style="box-shadow: none;">
+                    <div class="id-card-bg-pattern"></div>
+                    <div class="card-header-shape flex items-center justify-between flex-shrink-0">
+                        <img id="exp-logo-kiri" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Lambang_Kementerian_Agama.png" class="w-10 h-10 object-contain bg-white rounded-full p-1" alt="Logo Kemenag">
+                        <div class="flex-1 px-1">
+                            <div id="exp-kop-1" class="text-[0.65rem] font-medium tracking-wide uppercase">Kementerian Agama RI</div>
+                            <div id="exp-kop-2" class="text-sm font-bold uppercase leading-tight mt-0.5">MAN 1 Kota Hijau</div>
+                            <div id="exp-kop-3" class="text-[0.55rem] font-light mt-1">Jl. Pendidikan No. 1, Kota Hijau 12345</div>
+                        </div>
+                        <img id="exp-logo-kanan" src="" class="w-10 h-10 object-contain bg-white rounded-full p-1 opacity-0" alt="Logo Sekolah">
+                    </div>
+                    <div class="card-title">
+                        <h3 class="text-green-800 font-bold text-sm uppercase border-b-2 border-green-500 inline-block px-4 pb-0.5">Kartu Tanda Siswa</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="photo-container">
+                            <img id="exp-foto" src="" alt="Foto Siswa">
+                        </div>
+                        <div class="card-data">
+                            <table>
+                                <tr><td>Nama</td><td>: <span id="exp-nama" class="font-bold text-gray-800 text-xs"></span></td></tr>
+                                <tr><td>NISN/NISM</td><td>: <span id="exp-nisn" class="text-gray-800 font-mono"></span></td></tr>
+                                <tr><td>TTL</td><td>: <span id="exp-ttl" class="text-gray-800"></span></td></tr>
+                                <tr><td>J. Kelamin</td><td>: <span id="exp-jk" class="text-gray-800"></span></td></tr>
+                                <tr><td>Alamat</td><td class="leading-tight">: <span id="exp-alamat" class="text-gray-800"></span></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="front-footer">
+                        <div id="exp-qr" class="qr-placeholder flex items-center justify-center overflow-hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Back Clone -->
+                <div id="export-clone-back" class="id-card-wrapper theme-emerald flex flex-col relative" style="box-shadow: none;">
+                    <div class="id-card-bg-pattern"></div>
+                    <div class="back-header text-white text-center py-3 font-bold text-sm tracking-wide z-10 shadow-sm flex-shrink-0">
+                        PERATURAN PEMEGANG KARTU
+                    </div>
+                    <div class="back-content-wrapper flex-1">
+                        <div class="rules-section">
+                            <ul id="exp-rules" class="text-[0.65rem] text-gray-800 text-justify list-decimal pl-4 space-y-2 leading-relaxed font-medium">
+                                <li>Kartu ini adalah identitas resmi siswa/i madrasah dan harus dibawa setiap saat.</li>
+                                <li>Kartu ini tidak boleh digunakan diluar kepentingan madrasah.</li>
+                                <li>Apabila kartu hilang atau rusak, segera melapor kepada TU.</li>
+                                <li>Kartu ini tidak boleh dipindahtangankan.</li>
+                                <li>Kartu ini berlaku selama menjadi siswa di Madrasah ini.</li>
+                            </ul>
+                        </div>
+                        <div class="ttd-section">
+                            <div class="ttd-box">
+                                <div class="mb-1 text-gray-800">
+                                    <span id="exp-tempat">Kota Hijau</span>, 
+                                    <span id="exp-tanggal">15 Juli 2026</span>
+                                </div>
+                                <div class="font-bold text-gray-800 mb-1">Kepala Madrasah</div>
+                                <div class="ttd-stamp-container">
+                                    <img id="exp-ttd" src="" class="ttd-img" alt="TTD">
+                                    <img id="exp-stempel" src="" class="stamp-img hidden" alt="Stempel">
+                                </div>
+                                <div id="exp-kepsek-nama" class="font-bold text-gray-800 mt-1 underline">Drs. H. Abdullah, M.Pd</div>
+                                <div class="text-[0.55rem] text-gray-600">NIP. <span id="exp-kepsek-nip">19700101 199512 1 001</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 py-2 text-center text-[0.6rem] text-gray-500 border-t z-10 flex-shrink-0">
+                        <em>"Madrasah Hebat Bermartabat"</em>
+                    </div>
                 </div>
             </div>
 
@@ -833,7 +904,7 @@
 
                             <!-- Bagian Aturan Belakang -->
                             <div class="md:col-span-2 mt-4">
-                                <h4 class="font-bold text-green-700 border-b pb-2 mb-4 text-lg">Teks Tata Tertib (Kartu Belakang)</h4>
+                                <h4 class="font-bold text-green-700 border-b pb-2 mb-4 text-lg">Teks Peraturan Pemegang Kartu (Kartu Belakang)</h4>
                                 <textarea id="set-rules" rows="5" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-green-500 focus:outline-none transition-colors text-sm font-mono" placeholder="Gunakan tag <li>...</li>"></textarea>
                                 <p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle text-blue-500"></i> Mendukung format HTML dasar. Gunakan tag <code>&lt;li&gt; Teks &lt;/li&gt;</code> untuk membuat daftar (bullet points).</p>
                             </div>
@@ -958,6 +1029,7 @@
 
         function handleLogout() {
             document.getElementById('view-main').classList.add('hidden');
+            document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-login').classList.remove('hidden');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
@@ -1038,14 +1110,12 @@
             const foto = document.getElementById('out-foto').src;
 
             if (id) {
-                // Update existing
                 const index = studentsData.findIndex(s => s.id == id);
                 if (index !== -1) {
                     studentsData[index] = { id: Number(id), nama, nisn, jk, ttl, alamat, foto };
                 }
                 showNotification('Data siswa berhasil diperbarui!', 'success');
             } else {
-                // Insert new
                 const newStudent = {
                     id: Date.now(),
                     nama, nisn, jk, ttl, alamat, foto
@@ -1095,12 +1165,18 @@
         function changeTemplate(themeName) {
             const frontCard = document.getElementById('card-front');
             const backCard = document.getElementById('card-back');
+            const cloneFront = document.getElementById('export-clone-front');
+            const cloneBack = document.getElementById('export-clone-back');
             
             frontCard.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
             backCard.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
+            cloneFront.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
+            cloneBack.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
             
             frontCard.classList.add(`theme-${themeName}`);
             backCard.classList.add(`theme-${themeName}`);
+            cloneFront.classList.add(`theme-${themeName}`);
+            cloneBack.classList.add(`theme-${themeName}`);
 
             if (themeName === 'emerald') activeThemeName = 'Green Emerald';
             else if (themeName === 'tosca') activeThemeName = 'Tosca Modern';
@@ -1114,18 +1190,24 @@
         function toggleOrientation(mode) {
             const front = document.getElementById('card-front');
             const back = document.getElementById('card-back');
+            const cloneFront = document.getElementById('export-clone-front');
+            const cloneBack = document.getElementById('export-clone-back');
             const btnPot = document.getElementById('btn-ori-portrait');
             const btnLan = document.getElementById('btn-ori-landscape');
 
             if (mode === 'landscape') {
                 front.classList.add('landscape');
                 back.classList.add('landscape');
+                cloneFront.classList.add('landscape');
+                cloneBack.classList.add('landscape');
                 isPortrait = false;
                 btnLan.className = 'flex-1 py-2 rounded-full bg-white text-green-800 font-bold shadow-md text-sm transition-all';
                 btnPot.className = 'flex-1 py-2 rounded-full text-white font-medium hover:bg-white/20 text-sm transition-all';
             } else {
                 front.classList.remove('landscape');
                 back.classList.remove('landscape');
+                cloneFront.classList.remove('landscape');
+                cloneBack.classList.remove('landscape');
                 isPortrait = true;
                 btnPot.className = 'flex-1 py-2 rounded-full bg-white text-green-800 font-bold shadow-md text-sm transition-all';
                 btnLan.className = 'flex-1 py-2 rounded-full text-white font-medium hover:bg-white/20 text-sm transition-all';
@@ -1163,25 +1245,39 @@
         function updatePreview() {
             const nama = document.getElementById('in-nama').value || 'Nama Siswa';
             const nisn = document.getElementById('in-nisn').value || '0000000000';
-            
+            const jk = document.getElementById('in-jk').value;
+            const ttl = document.getElementById('in-ttl').value || '-';
+            const alamat = document.getElementById('in-alamat').value || '-';
+            const fotoSrc = document.getElementById('out-foto').src;
+
+            // Update Front Card
             document.getElementById('out-nama').innerText = nama;
             document.getElementById('out-nisn').innerText = nisn;
-            document.getElementById('out-jk').innerText = document.getElementById('in-jk').value;
-            document.getElementById('out-ttl').innerText = document.getElementById('in-ttl').value || '-';
-            document.getElementById('out-alamat').innerText = document.getElementById('in-alamat').value || '-';
+            document.getElementById('out-jk').innerText = jk;
+            document.getElementById('out-ttl').innerText = ttl;
+            document.getElementById('out-alamat').innerText = alamat;
+
+            // Update Export Package Clone
+            document.getElementById('exp-nama').innerText = nama;
+            document.getElementById('exp-nisn').innerText = nisn;
+            document.getElementById('exp-jk').innerText = jk;
+            document.getElementById('exp-ttl').innerText = ttl;
+            document.getElementById('exp-alamat').innerText = alamat;
+            document.getElementById('exp-foto').src = fotoSrc;
 
             const qrContainer = document.getElementById('out-qr');
+            const expQrContainer = document.getElementById('exp-qr');
             qrContainer.innerHTML = '';
+            expQrContainer.innerHTML = '';
+            
             const qrText = `${nama} - ${nisn}`;
             
             if (typeof QRCode !== 'undefined') {
                 currentQR = new QRCode(qrContainer, {
-                    text: qrText,
-                    width: 46,
-                    height: 46,
-                    colorDark : "#0f4c3a",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.L
+                    text: qrText, width: 46, height: 46, colorDark: "#0f4c3a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L
+                });
+                new QRCode(expQrContainer, {
+                    text: qrText, width: 46, height: 46, colorDark: "#0f4c3a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L
                 });
             }
         }
@@ -1192,6 +1288,7 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('out-foto').src = e.target.result;
+                    document.getElementById('exp-foto').src = e.target.result;
                 }
                 reader.readAsDataURL(file);
             }
@@ -1205,8 +1302,17 @@
                 reader.onload = function(e) {
                     const imgEl = document.getElementById(targetId);
                     imgEl.src = e.target.result;
-                    if (makeVisible) {
-                        imgEl.classList.remove('opacity-0');
+                    if (makeVisible) imgEl.classList.remove('opacity-0');
+
+                    // Synchronize with export clone
+                    if (targetId === 'out-logo-kiri') {
+                        document.getElementById('exp-logo-kiri').src = e.target.result;
+                        document.getElementById('exp-logo-kiri').classList.remove('opacity-0');
+                    } else if (targetId === 'out-logo-kanan') {
+                        document.getElementById('exp-logo-kanan').src = e.target.result;
+                        if (makeVisible) document.getElementById('exp-logo-kanan').classList.remove('opacity-0');
+                    } else if (targetId === 'out-ttd') {
+                        document.getElementById('exp-ttd').src = e.target.result;
                     }
                 }
                 reader.readAsDataURL(file);
@@ -1221,60 +1327,87 @@
                     const stempelEl = document.getElementById('out-stempel');
                     stempelEl.src = e.target.result;
                     stempelEl.classList.remove('hidden');
+
+                    const expStempelEl = document.getElementById('exp-stempel');
+                    expStempelEl.src = e.target.result;
+                    expStempelEl.classList.remove('hidden');
                 }
                 reader.readAsDataURL(file);
             }
         }
 
         function applySettings() {
-            document.getElementById('out-kop-1').innerText = document.getElementById('set-kop1').value;
-            document.getElementById('out-kop-2').innerText = document.getElementById('set-kop2').value;
-            document.getElementById('out-kop-3').innerText = document.getElementById('set-kop3').value;
-            
-            document.getElementById('out-tempat').innerText = document.getElementById('set-tempat').value;
-            document.getElementById('out-tanggal').innerText = document.getElementById('set-tanggal').value;
-            document.getElementById('out-kepsek-nama').innerText = document.getElementById('set-kepsek').value;
-            document.getElementById('out-kepsek-nip').innerText = document.getElementById('set-nip').value;
-            
-            document.getElementById('out-rules').innerHTML = document.getElementById('set-rules').value;
+            const kop1 = document.getElementById('set-kop1').value;
+            const kop2 = document.getElementById('set-kop2').value;
+            const kop3 = document.getElementById('set-kop3').value;
+            const tempat = document.getElementById('set-tempat').value;
+            const tanggal = document.getElementById('set-tanggal').value;
+            const kepsek = document.getElementById('set-kepsek').value;
+            const nip = document.getElementById('set-nip').value;
+            const rules = document.getElementById('set-rules').value;
+
+            document.getElementById('out-kop-1').innerText = kop1;
+            document.getElementById('out-kop-2').innerText = kop2;
+            document.getElementById('out-kop-3').innerText = kop3;
+            document.getElementById('out-tempat').innerText = tempat;
+            document.getElementById('out-tanggal').innerText = tanggal;
+            document.getElementById('out-kepsek-nama').innerText = kepsek;
+            document.getElementById('out-kepsek-nip').innerText = nip;
+            document.getElementById('out-rules').innerHTML = rules;
+
+            // Sync clone
+            document.getElementById('exp-kop-1').innerText = kop1;
+            document.getElementById('exp-kop-2').innerText = kop2;
+            document.getElementById('exp-kop-3').innerText = kop3;
+            document.getElementById('exp-tempat').innerText = tempat;
+            document.getElementById('exp-tanggal').innerText = tanggal;
+            document.getElementById('exp-kepsek-nama').innerText = kepsek;
+            document.getElementById('exp-kepsek-nip').innerText = nip;
+            document.getElementById('exp-rules').innerHTML = rules;
 
             showNotification('Pengaturan desain berhasil disimpan!', 'success');
         }
 
-        // --- EXPORT LOGIC ---
-        function exportCard(format) {
+        // --- EXPORT FULL PACKAGE (FRONT & BACK SIDE BY SIDE) ---
+        function exportFullCardPackage() {
             const loading = document.getElementById('loading');
             loading.classList.remove('hidden');
             loading.classList.add('flex');
 
-            const targetEl = isFrontView ? document.getElementById('card-front') : document.getElementById('card-back');
-            const sideName = isFrontView ? 'Depan' : 'Belakang';
+            // Sync TTD & Stempel images to clone before capture
+            document.getElementById('exp-ttd').src = document.getElementById('out-ttd').src;
+            const mainStempel = document.getElementById('out-stempel');
+            const expStempel = document.getElementById('exp-stempel');
+            if (!mainStempel.classList.contains('hidden')) {
+                expStempel.src = mainStempel.src;
+                expStempel.classList.remove('hidden');
+            }
+
+            const packageContainer = document.getElementById('export-package-container');
             const studentName = document.getElementById('in-nama').value.replace(/[^a-zA-Z0-9]/g, '_') || 'Siswa';
             const orientationName = isPortrait ? 'Portrait' : 'Landscape';
 
             setTimeout(() => {
-                html2canvas(targetEl, {
+                html2canvas(packageContainer, {
                     scale: 3, 
                     useCORS: true,
                     backgroundColor: null,
                 }).then(canvas => {
-                    if (format === 'png') {
-                        const link = document.createElement('a');
-                        link.download = `ID_Card_${studentName}_${sideName}_${orientationName}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                        
-                        loading.classList.add('hidden');
-                        loading.classList.remove('flex');
-                        showNotification(`File PNG (${sideName} - ${orientationName}) berhasil diunduh!`, 'success');
-                    }
+                    const link = document.createElement('a');
+                    link.download = `Paket_Kartu_${studentName}_${orientationName}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    loading.classList.add('hidden');
+                    loading.classList.remove('flex');
+                    showNotification('Paket Kartu (Depan & Belakang) berhasil diunduh!', 'success');
                 }).catch(err => {
                     console.error(err);
                     loading.classList.add('hidden');
                     loading.classList.remove('flex');
-                    showNotification('Terjadi kesalahan saat mengekspor gambar.', 'error');
+                    showNotification('Terjadi kesalahan saat mengekspor paket gambar.', 'error');
                 });
-            }, 500);
+            }, 600);
         }
     </script>
 </body>
