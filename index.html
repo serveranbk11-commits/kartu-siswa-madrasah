@@ -134,7 +134,6 @@
         }
 
         /* Template Themes */
-        /* Template 1: Emerald & Gold (Default) */
         .theme-emerald {
             background-image: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
         }
@@ -145,7 +144,6 @@
             background: #15803d;
         }
 
-        /* Template 2: Tosca & White Modern */
         .theme-tosca {
             background-image: linear-gradient(180deg, #ffffff 0%, #ecfdf5 100%);
         }
@@ -159,7 +157,6 @@
             color: #0d9488 !important;
         }
 
-        /* Template 3: Olive & Yellow Heritage */
         .theme-olive {
             background-image: linear-gradient(180deg, #ffffff 0%, #fefce8 100%);
         }
@@ -322,7 +319,7 @@
         }
         
         .landscape .ttd-section {
-            width: 160px;
+            width: 170px;
             margin-top: 0;
             justify-content: flex-end;
             padding-bottom: 20px;
@@ -332,11 +329,32 @@
             text-align: center;
             font-size: 0.65rem;
             display: inline-block;
+            position: relative;
+        }
+        
+        /* Container TTD & Stempel Overlay */
+        .ttd-stamp-container {
+            position: relative;
+            display: inline-block;
+            margin: -5px auto;
         }
         .ttd-img {
-            height: 35px;
+            height: 38px;
             object-fit: contain;
-            margin: 2px auto;
+            position: relative;
+            z-index: 2;
+        }
+        .stamp-img {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            opacity: 0.85;
+            bottom: -5px;
+            left: -15px;
+            z-index: 1;
+            transform: rotate(-10deg);
+            pointer-events: none;
         }
 
         /* Utilities */
@@ -578,7 +596,7 @@
                             
                             <!-- Header / Kop -->
                             <div class="card-header-shape flex items-center justify-between flex-shrink-0">
-                                <img id="out-logo-kiri" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Lambang_Kementerian_Agama.png" onerror="this.onerror=null;this.src='https://placehold.co/200x200/16a34a/ffffff?text=Logo'" class="w-10 h-10 object-contain bg-white rounded-full p-1" alt="Logo Kemenag">
+                                <img id="out-logo-kiri" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Lambang_Kementerian_Agama.png" onerror="this.onerror=null;this.src='https://placehold.co/200x200/16a34a/ffffff?text=Kemenag'" class="w-10 h-10 object-contain bg-white rounded-full p-1" alt="Logo Kemenag">
                                 <div class="flex-1 px-1">
                                     <div id="out-kop-1" class="text-[0.65rem] font-medium tracking-wide uppercase">Kementerian Agama RI</div>
                                     <div id="out-kop-2" class="text-sm font-bold uppercase leading-tight mt-0.5">MAN 1 Kota Hijau</div>
@@ -656,7 +674,10 @@
                                             <span id="out-tanggal">15 Juli 2026</span>
                                         </div>
                                         <div class="font-bold text-gray-800 mb-1">Kepala Madrasah</div>
-                                        <img id="out-ttd" src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Tanda_tangan_Bapak_Presiden_Joko_Widodo.png" onerror="this.onerror=null;this.src='https://placehold.co/150x50/ffffff/000000?text=TTD'" class="ttd-img" alt="TTD">
+                                        <div class="ttd-stamp-container">
+                                            <img id="out-ttd" src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Tanda_tangan_Bapak_Presiden_Joko_Widodo.png" onerror="this.onerror=null;this.src='https://placehold.co/150x50/ffffff/000000?text=TTD'" class="ttd-img" alt="TTD">
+                                            <img id="out-stempel" src="" class="stamp-img hidden" alt="Stempel Digital">
+                                        </div>
                                         <div id="out-kepsek-nama" class="font-bold text-gray-800 mt-1 underline">Drs. H. Abdullah, M.Pd</div>
                                         <div class="text-[0.55rem] text-gray-600">NIP. <span id="out-kepsek-nip">19700101 199512 1 001</span></div>
                                     </div>
@@ -721,7 +742,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <!-- Bagian Header/Kop -->
                             <div class="space-y-4">
-                                <h4 class="font-bold text-green-700 border-b pb-2 text-lg">Teks Header (Kop Depan)</h4>
+                                <h4 class="font-bold text-green-700 border-b pb-2 text-lg">Teks & Logo Header (Kop Depan)</h4>
                                 <div>
                                     <label class="block text-sm text-gray-600 mb-1">Baris 1 (Kementerian)</label>
                                     <input type="text" id="set-kop1" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:border-green-500 focus:outline-none transition-colors" value="Kementerian Agama RI">
@@ -734,15 +755,21 @@
                                     <label class="block text-sm text-gray-600 mb-1">Baris 3 (Alamat/Website)</label>
                                     <input type="text" id="set-kop3" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:border-green-500 focus:outline-none transition-colors text-sm" value="Jl. Pendidikan No. 1, Kota Hijau 12345">
                                 </div>
-                                <div class="pt-2">
-                                    <label class="block text-sm font-semibold text-blue-600 mb-2"><i class="fas fa-upload mr-1"></i> Logo Kanan (Logo Sekolah)</label>
-                                    <input type="file" id="set-logo" accept="image/*" onchange="handleSettingImageUpload(event, 'out-logo-kanan', true)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <div class="pt-2 space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-blue-600 mb-1"><i class="fas fa-upload mr-1"></i> Logo Kementerian / Kiri</label>
+                                        <input type="file" id="set-logo-kiri" accept="image/*" onchange="handleSettingImageUpload(event, 'out-logo-kiri', true)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-blue-600 mb-1"><i class="fas fa-upload mr-1"></i> Logo Sekolah / Kanan</label>
+                                        <input type="file" id="set-logo-kanan" accept="image/*" onchange="handleSettingImageUpload(event, 'out-logo-kanan', true)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Bagian Tanda Tangan -->
+                            <!-- Bagian Tanda Tangan & Stempel -->
                             <div class="space-y-4">
-                                <h4 class="font-bold text-green-700 border-b pb-2 text-lg">Tanda Tangan (Kartu Belakang)</h4>
+                                <h4 class="font-bold text-green-700 border-b pb-2 text-lg">Tanda Tangan & Stempel (Kartu Belakang)</h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm text-gray-600 mb-1">Tempat Terbit</label>
@@ -761,9 +788,15 @@
                                     <label class="block text-sm text-gray-600 mb-1">NIP Kepala Madrasah</label>
                                     <input type="text" id="set-nip" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:border-green-500 focus:outline-none transition-colors font-mono text-sm" value="19700101 199512 1 001">
                                 </div>
-                                <div class="pt-2">
-                                    <label class="block text-sm font-semibold text-blue-600 mb-2"><i class="fas fa-signature mr-1"></i> Upload Scan TTD (PNG Transparan)</label>
-                                    <input type="file" id="set-ttd" accept="image/png" onchange="handleSettingImageUpload(event, 'out-ttd', false)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                <div class="pt-2 space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-green-700 mb-1"><i class="fas fa-signature mr-1"></i> Upload TTD (PNG Transparan)</label>
+                                        <input type="file" id="set-ttd" accept="image/png" onchange="handleSettingImageUpload(event, 'out-ttd', false)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-purple-700 mb-1"><i class="fas fa-stamp mr-1"></i> Upload Stempel Digital (PNG Transparan)</label>
+                                        <input type="file" id="set-stempel-file" accept="image/png" onchange="handleStempelUpload(event)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                                    </div>
                                 </div>
                             </div>
 
@@ -917,11 +950,9 @@
             const frontCard = document.getElementById('card-front');
             const backCard = document.getElementById('card-back');
             
-            // Remove old theme classes
             frontCard.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
             backCard.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
             
-            // Add new theme
             frontCard.classList.add(`theme-${themeName}`);
             backCard.classList.add(`theme-${themeName}`);
 
@@ -1031,6 +1062,19 @@
                     if (makeVisible) {
                         imgEl.classList.remove('opacity-0');
                     }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleStempelUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const stempelEl = document.getElementById('out-stempel');
+                    stempelEl.src = e.target.result;
+                    stempelEl.classList.remove('hidden');
                 }
                 reader.readAsDataURL(file);
             }
