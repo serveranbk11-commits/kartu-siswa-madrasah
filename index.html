@@ -654,17 +654,17 @@
                             <div class="id-card-bg-pattern"></div>
                             
                             <div class="back-header text-white text-center py-3 font-bold text-sm tracking-wide z-10 shadow-sm flex-shrink-0">
-                                PERATURAN PEMEGANG KARTU
+                                TATA TERTIB SISWA
                             </div>
                             
                             <div class="back-content-wrapper flex-1">
                                 <div class="rules-section">
                                     <ul id="out-rules" class="text-[0.65rem] text-gray-800 text-justify list-decimal pl-4 space-y-2 leading-relaxed font-medium">
                                         <li>Kartu ini adalah identitas resmi siswa/i madrasah dan harus dibawa setiap saat.</li>
-                                        <li>Kartu ini tidak boleh digunakan diluar kepentingan madrasah.</li>
+                                        <li>Wajib dikalungkan/dipakai selama jam pelajaran dan kegiatan resmi madrasah.</li>
                                         <li>Apabila kartu hilang atau rusak, segera melapor kepada TU.</li>
                                         <li>Kartu ini tidak boleh dipindahtangankan.</li>
-                                        <li>Kartu ini berlaku selama menjadi siswa di Madrasah ini.</li>
+                                        <li>Berlaku juga sebagai kartu perpustakaan.</li>
                                     </ul>
                                 </div>
 
@@ -742,16 +742,16 @@
                 <div id="export-clone-back" class="id-card-wrapper theme-emerald flex flex-col relative" style="box-shadow: none;">
                     <div class="id-card-bg-pattern"></div>
                     <div class="back-header text-white text-center py-3 font-bold text-sm tracking-wide z-10 shadow-sm flex-shrink-0">
-                        PERATURAN PEMEGANG KARTU
+                        TATA TERTIB SISWA
                     </div>
                     <div class="back-content-wrapper flex-1">
                         <div class="rules-section">
                             <ul id="exp-rules" class="text-[0.65rem] text-gray-800 text-justify list-decimal pl-4 space-y-2 leading-relaxed font-medium">
                                 <li>Kartu ini adalah identitas resmi siswa/i madrasah dan harus dibawa setiap saat.</li>
-                                <li>Kartu ini tidak boleh digunakan diluar kepentingan madrasah.</li>
+                                <li>Wajib dikalungkan/dipakai selama jam pelajaran dan kegiatan resmi madrasah.</li>
                                 <li>Apabila kartu hilang atau rusak, segera melapor kepada TU.</li>
                                 <li>Kartu ini tidak boleh dipindahtangankan.</li>
-                                <li>Kartu ini berlaku selama menjadi siswa di Madrasah ini.</li>
+                                <li>Berlaku juga sebagai kartu perpustakaan.</li>
                             </ul>
                         </div>
                         <div class="ttd-section">
@@ -904,7 +904,7 @@
 
                             <!-- Bagian Aturan Belakang -->
                             <div class="md:col-span-2 mt-4">
-                                <h4 class="font-bold text-green-700 border-b pb-2 mb-4 text-lg">Teks Peraturan Pemegang Kartu (Kartu Belakang)</h4>
+                                <h4 class="font-bold text-green-700 border-b pb-2 mb-4 text-lg">Teks Tata Tertib (Kartu Belakang)</h4>
                                 <textarea id="set-rules" rows="5" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-green-500 focus:outline-none transition-colors text-sm font-mono" placeholder="Gunakan tag <li>...</li>"></textarea>
                                 <p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle text-blue-500"></i> Mendukung format HTML dasar. Gunakan tag <code>&lt;li&gt; Teks &lt;/li&gt;</code> untuk membuat daftar (bullet points).</p>
                             </div>
@@ -967,117 +967,234 @@
         <p class="text-white font-bold text-xl drop-shadow-md">Memproses Kartu...</p>
     </div>
 
-    <script>
-        let currentQR = null;
-        let isFrontView = true;
-        let isPortrait = true;
-        let activeThemeName = 'Green Emerald';
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Mock Database Siswa Awal
-        let studentsData = [
-            {
-                id: 1,
-                nama: 'Ahmad Syauqi',
-                nisn: '0012345678',
-                jk: 'Laki-Laki',
-                ttl: 'Jakarta, 12 Agustus 2005',
-                alamat: 'Jl. Sudirman No. 10',
-                foto: 'https://via.placeholder.com/150x200?text=FOTO+3x4'
+        // === GLOBAL STATES ===
+        window.currentQR = null;
+        window.isFrontView = true;
+        window.isPortrait = true;
+        window.activeThemeName = 'emerald';
+        window.studentsData = [];
+        window.cloudEnabled = false;
+
+        // === FIREBASE CLOUD SETUP ===
+        let db, auth, currentUser;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ksm-app-madrasah';
+
+        try {
+            let firebaseConfig;
+            // Deteksi otomatis jika berjalan di Canvas, gunakan config sistem
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } else {
+                // MANUAL CONFIG (Penting saat di-hosting di GitHub Pages!)
+                // Ganti data di bawah ini dengan kredensial Firebase Project Anda sendiri
+                firebaseConfig = {
+                    apiKey: "AIzaSyCREJu_3ZaA2MhSFdVji-Ap21V7Tpo9Bp0",
+                    authDomain: "ksm-madrasah-app.firebaseapp.com",
+                    projectId: "ksm-madrasah-app",
+                    storageBucket: "ksm-madrasah-app.firebasestorage.app",
+                    messagingSenderId: "927540771356",
+                    appId: "1:927540771356:web:2836b7c261ee3f7a49fdd9"
+                };
             }
-        ];
+            
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            window.cloudEnabled = true;
+
+            const initAuth = async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    console.error("Auth Error:", e);
+                }
+            };
+
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    setupRealtimeListeners();
+                }
+            });
+            
+            initAuth();
+        } catch (error) {
+            console.warn("Cloud Sync tidak aktif (Firebase Config tidak ada/valid). Berjalan pada Mode Lokal.", error);
+            window.cloudEnabled = false;
+            window.studentsData = [];
+            window.renderStudentTable();
+        }
+
+        // ==========================================
+        // REALTIME DATABASE LISTENERS
+        // ==========================================
+        function setupRealtimeListeners() {
+            if (!currentUser) return;
+            
+            // 1. Dengarkan Perubahan Daftar Siswa
+            const studentsCol = collection(db, 'artifacts', appId, 'public', 'data', 'students');
+            onSnapshot(studentsCol, (snapshot) => {
+                window.studentsData = [];
+                snapshot.forEach(doc => window.studentsData.push(doc.data()));
+                // Urutkan berdasarkan waktu
+                window.studentsData.sort((a, b) => b.id - a.id); 
+                window.renderStudentTable();
+            }, (error) => console.error("Error fetching students:", error));
+
+            // 2. Dengarkan Perubahan Pengaturan Desain
+            const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'appSettings');
+            onSnapshot(settingsRef, (docSnap) => {
+                if(docSnap.exists()) {
+                    const data = docSnap.data();
+                    syncSettingsToUI(data);
+                    
+                    // Isi form pengaturan dengan data Cloud
+                    document.getElementById('set-kop1').value = data.kop1 || '';
+                    document.getElementById('set-kop2').value = data.kop2 || '';
+                    document.getElementById('set-kop3').value = data.kop3 || '';
+                    document.getElementById('set-tempat').value = data.tempat || '';
+                    document.getElementById('set-tanggal').value = data.tanggal || '';
+                    document.getElementById('set-kepsek').value = data.kepsek || '';
+                    document.getElementById('set-nip').value = data.nip || '';
+                    document.getElementById('set-rules').value = data.rules || '';
+                }
+            }, (error) => console.error("Error fetching settings:", error));
+        }
+
+        function syncSettingsToUI(data) {
+            const kop1 = data.kop1 || 'Kementerian Agama RI';
+            const kop2 = data.kop2 || 'MAN 1 Kota Hijau';
+            const kop3 = data.kop3 || 'Jl. Pendidikan No. 1, Kota Hijau 12345';
+            const tempat = data.tempat || 'Kota Hijau';
+            const tanggal = data.tanggal || '15 Juli 2026';
+            const kepsek = data.kepsek || 'Drs. H. Abdullah, M.Pd';
+            const nip = data.nip || '19700101 199512 1 001';
+            const rules = data.rules || document.getElementById('out-rules').innerHTML.trim();
+
+            document.getElementById('out-kop-1').innerText = kop1;
+            document.getElementById('exp-kop-1').innerText = kop1;
+            document.getElementById('out-kop-2').innerText = kop2;
+            document.getElementById('exp-kop-2').innerText = kop2;
+            document.getElementById('out-kop-3').innerText = kop3;
+            document.getElementById('exp-kop-3').innerText = kop3;
+            
+            document.getElementById('out-tempat').innerText = tempat;
+            document.getElementById('exp-tempat').innerText = tempat;
+            document.getElementById('out-tanggal').innerText = tanggal;
+            document.getElementById('exp-tanggal').innerText = tanggal;
+            document.getElementById('out-kepsek-nama').innerText = kepsek;
+            document.getElementById('exp-kepsek-nama').innerText = kepsek;
+            document.getElementById('out-kepsek-nip').innerText = nip;
+            document.getElementById('exp-kepsek-nip').innerText = nip;
+            
+            document.getElementById('out-rules').innerHTML = rules;
+            document.getElementById('exp-rules').innerHTML = rules;
+
+            if(data.logoKiri) {
+                document.getElementById('out-logo-kiri').src = data.logoKiri;
+                document.getElementById('exp-logo-kiri').src = data.logoKiri;
+                document.getElementById('out-logo-kiri').classList.remove('opacity-0');
+            }
+            if(data.logoKanan) {
+                document.getElementById('out-logo-kanan').src = data.logoKanan;
+                document.getElementById('exp-logo-kanan').src = data.logoKanan;
+                document.getElementById('out-logo-kanan').classList.remove('opacity-0');
+                document.getElementById('exp-logo-kanan').classList.remove('opacity-0');
+            }
+            if(data.ttd) {
+                document.getElementById('out-ttd').src = data.ttd;
+                document.getElementById('exp-ttd').src = data.ttd;
+            }
+            if(data.stempel) {
+                document.getElementById('out-stempel').src = data.stempel;
+                document.getElementById('exp-stempel').src = data.stempel;
+                document.getElementById('out-stempel').classList.remove('hidden');
+                document.getElementById('exp-stempel').classList.remove('hidden');
+            }
+            if(data.theme) {
+                window.changeTemplate(data.theme, true); // true = skip cloud save
+            }
+        }
 
         window.onload = () => {
             document.getElementById('set-rules').value = document.getElementById('out-rules').innerHTML.trim();
-            renderStudentTable();
-            updatePreview();
+            window.updatePreview();
         };
 
-        // --- NAVIGATION & ROUTING ---
-        function switchPage(pageId) {
-            document.querySelectorAll('.page-section').forEach(page => {
-                page.classList.add('hidden');
-            });
+        // ==========================================
+        // UI & ROUTING FUNCTIONS
+        // ==========================================
+        window.switchPage = function(pageId) {
+            document.querySelectorAll('.page-section').forEach(page => page.classList.add('hidden'));
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('active');
-            });
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`nav-${pageId}`).classList.add('active');
 
-            if (pageId === 'input') {
-                setTimeout(() => updatePreview(), 100);
-            } else if (pageId === 'database') {
-                renderStudentTable();
-            }
+            if (pageId === 'input') setTimeout(() => window.updatePreview(), 100);
         }
 
-        // --- AUTH ---
-        function handleLogin(e) {
+        window.handleLogin = function(e) {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-
-            if (user === 'admin' && pass === 'admin') {
+            if (document.getElementById('username').value === 'admin' && document.getElementById('password').value === 'admin') {
                 document.getElementById('view-login').classList.add('hidden');
                 document.getElementById('view-main').classList.remove('hidden');
-                switchPage('dashboard');
-                showNotification('Berhasil login sebagai Administrator!', 'success');
-            } else {
-                showNotification('Username/Password salah! Coba admin / admin', 'error');
-            }
+                window.switchPage('dashboard');
+                window.showNotification('Berhasil login sebagai Administrator!', 'success');
+            } else window.showNotification('Username/Password salah! Coba admin / admin', 'error');
         }
 
-        function handleLogout() {
+        window.handleLogout = function() {
             document.getElementById('view-main').classList.add('hidden');
-            document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-login').classList.remove('hidden');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
-            showNotification('Sesi diakhiri. Sampai jumpa.', 'info');
+            window.showNotification('Sesi diakhiri. Sampai jumpa.', 'info');
         }
 
-        function handlePasswordChange(e) {
+        window.handlePasswordChange = function(e) {
             e.preventDefault();
-            showNotification('Kredensial berhasil diperbarui (Simulasi)', 'success');
+            window.showNotification('Kredensial berhasil diperbarui (Simulasi)', 'success');
             e.target.reset();
         }
 
-        // --- TOAST NOTIF ---
-        function showNotification(message, type = 'info') {
+        window.showNotification = function(message, type = 'info') {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toast-icon');
             const msgEl = document.getElementById('toast-message');
             
             toast.className = 'fixed top-5 right-5 transform transition-transform duration-300 z-[200] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl text-white font-medium min-w-[300px]';
+            if (type === 'success') { toast.classList.add('bg-green-600'); icon.className = 'fas fa-check-circle text-2xl'; }
+            else if (type === 'error') { toast.classList.add('bg-red-500'); icon.className = 'fas fa-exclamation-triangle text-2xl'; }
+            else { toast.classList.add('bg-blue-600'); icon.className = 'fas fa-info-circle text-2xl'; }
             
-            if (type === 'success') {
-                toast.classList.add('bg-green-600');
-                icon.className = 'fas fa-check-circle text-2xl';
-            } else if (type === 'error') {
-                toast.classList.add('bg-red-500');
-                icon.className = 'fas fa-exclamation-triangle text-2xl';
-            } else {
-                toast.classList.add('bg-blue-600');
-                icon.className = 'fas fa-info-circle text-2xl';
-            }
             msgEl.innerText = message;
             toast.classList.remove('translate-x-[150%]');
-            setTimeout(() => { toast.classList.add('translate-x-[150%]'); }, 3000);
+            setTimeout(() => toast.classList.add('translate-x-[150%]'), 3000);
         }
 
-        // --- DATABASE & CRUD SISWA ---
-        function renderStudentTable() {
+        // ==========================================
+        // DATABASE CRUD (SISWA)
+        // ==========================================
+        window.renderStudentTable = function() {
             const tbody = document.getElementById('student-table-body');
             tbody.innerHTML = '';
-            
-            document.getElementById('dash-total-siswa').innerText = studentsData.length;
+            document.getElementById('dash-total-siswa').innerText = window.studentsData.length;
 
-            if (studentsData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500">Belum ada data siswa terdaftar. Silakan tambah data baru.</td></tr>`;
+            if (window.studentsData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500">Belum ada data siswa.</td></tr>`;
                 return;
             }
 
-            studentsData.forEach((student, index) => {
+            window.studentsData.forEach((student, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-green-50 transition-colors';
                 tr.innerHTML = `
@@ -1087,49 +1204,52 @@
                     <td class="p-3 font-mono">${student.nisn}</td>
                     <td class="p-3 text-xs">${student.ttl}</td>
                     <td class="p-3 text-center space-x-2">
-                        <button onclick="loadStudentToForm(${student.id})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors" title="Edit & Cetak">
-                            <i class="fas fa-edit mr-1"></i> Edit / Cetak
-                        </button>
-                        <button onclick="deleteStudent(${student.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors" title="Hapus">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <button onclick="loadStudentToForm('${student.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors" title="Edit & Cetak"><i class="fas fa-edit mr-1"></i> Edit/Cetak</button>
+                        <button onclick="deleteStudent('${student.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors" title="Hapus"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function saveStudentData(e) {
+        window.saveStudentData = async function(e) {
             e.preventDefault();
-            const id = document.getElementById('in-id').value;
-            const nama = document.getElementById('in-nama').value;
-            const nisn = document.getElementById('in-nisn').value;
-            const jk = document.getElementById('in-jk').value;
-            const ttl = document.getElementById('in-ttl').value;
-            const alamat = document.getElementById('in-alamat').value;
-            const foto = document.getElementById('out-foto').src;
+            const id = document.getElementById('in-id').value || Date.now().toString();
+            
+            const studentObj = {
+                id: id,
+                nama: document.getElementById('in-nama').value,
+                nisn: document.getElementById('in-nisn').value,
+                jk: document.getElementById('in-jk').value,
+                ttl: document.getElementById('in-ttl').value,
+                alamat: document.getElementById('in-alamat').value,
+                foto: document.getElementById('out-foto').src
+            };
 
-            if (id) {
-                const index = studentsData.findIndex(s => s.id == id);
-                if (index !== -1) {
-                    studentsData[index] = { id: Number(id), nama, nisn, jk, ttl, alamat, foto };
+            if (window.cloudEnabled && currentUser) {
+                try {
+                    const studentRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                    await setDoc(studentRef, studentObj);
+                    window.showNotification('Data tersimpan ke Cloud!', 'success');
+                } catch (err) {
+                    console.error(err);
+                    window.showNotification('Gagal simpan ke Cloud', 'error');
                 }
-                showNotification('Data siswa berhasil diperbarui!', 'success');
             } else {
-                const newStudent = {
-                    id: Date.now(),
-                    nama, nisn, jk, ttl, alamat, foto
-                };
-                studentsData.push(newStudent);
-                showNotification('Data siswa baru berhasil disimpan!', 'success');
+                // Mode Lokal (Offline)
+                const index = window.studentsData.findIndex(s => s.id == id);
+                if (index !== -1) window.studentsData[index] = studentObj;
+                else window.studentsData.unshift(studentObj);
+                window.showNotification('Data disimpan (Mode Lokal)', 'info');
+                window.renderStudentTable();
             }
 
-            renderStudentTable();
-            switchPage('database');
+            window.resetForm();
+            window.switchPage('database');
         }
 
-        function loadStudentToForm(id) {
-            const student = studentsData.find(s => s.id == id);
+        window.loadStudentToForm = function(id) {
+            const student = window.studentsData.find(s => s.id == id);
             if (student) {
                 document.getElementById('in-id').value = student.id;
                 document.getElementById('in-nama').value = student.nama;
@@ -1138,254 +1258,227 @@
                 document.getElementById('in-ttl').value = student.ttl;
                 document.getElementById('in-alamat').value = student.alamat;
                 document.getElementById('out-foto').src = student.foto;
+                document.getElementById('exp-foto').src = student.foto;
 
                 document.getElementById('form-mode-badge').classList.remove('hidden');
-                switchPage('input');
-                updatePreview();
+                window.switchPage('input');
+                window.updatePreview();
             }
         }
 
-        function deleteStudent(id) {
+        window.deleteStudent = async function(id) {
             if (confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
-                studentsData = studentsData.filter(s => s.id != id);
-                renderStudentTable();
-                showNotification('Data siswa berhasil dihapus', 'info');
+                if (window.cloudEnabled && currentUser) {
+                    try {
+                        const studentRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id.toString());
+                        await deleteDoc(studentRef);
+                        window.showNotification('Data dihapus dari Cloud', 'info');
+                    } catch(err) { console.error(err); }
+                } else {
+                    window.studentsData = window.studentsData.filter(s => s.id != id);
+                    window.renderStudentTable();
+                    window.showNotification('Data dihapus (Lokal)', 'info');
+                }
             }
         }
 
-        function resetForm() {
+        window.resetForm = function() {
             document.getElementById('student-form').reset();
             document.getElementById('in-id').value = '';
             document.getElementById('out-foto').src = 'https://via.placeholder.com/150x200?text=FOTO+3x4';
+            document.getElementById('exp-foto').src = 'https://via.placeholder.com/150x200?text=FOTO+3x4';
             document.getElementById('form-mode-badge').classList.add('hidden');
-            updatePreview();
+            window.updatePreview();
         }
 
-        // --- TEMPLATE BACKGROUND SELECTOR ---
-        function changeTemplate(themeName) {
-            const frontCard = document.getElementById('card-front');
-            const backCard = document.getElementById('card-back');
-            const cloneFront = document.getElementById('export-clone-front');
-            const cloneBack = document.getElementById('export-clone-back');
+        // ==========================================
+        // SETTINGS & IMAGE COMPRESSION LOGIC
+        // ==========================================
+        window.changeTemplate = function(themeName, skipCloudSave = false) {
+            const els = ['card-front', 'card-back', 'export-clone-front', 'export-clone-back'];
+            els.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
+                el.classList.add(`theme-${themeName}`);
+            });
+            window.activeThemeName = themeName;
             
-            frontCard.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
-            backCard.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
-            cloneFront.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
-            cloneBack.classList.remove('theme-emerald', 'theme-tosca', 'theme-olive');
-            
-            frontCard.classList.add(`theme-${themeName}`);
-            backCard.classList.add(`theme-${themeName}`);
-            cloneFront.classList.add(`theme-${themeName}`);
-            cloneBack.classList.add(`theme-${themeName}`);
+            let labelName = themeName === 'emerald' ? 'Green Emerald' : (themeName === 'tosca' ? 'Tosca Modern' : 'Olive Heritage');
+            document.getElementById('dash-active-template').innerText = labelName;
 
-            if (themeName === 'emerald') activeThemeName = 'Green Emerald';
-            else if (themeName === 'tosca') activeThemeName = 'Tosca Modern';
-            else if (themeName === 'olive') activeThemeName = 'Olive Heritage';
+            // Centang radio yang sesuai
+            const radio = document.querySelector(`input[name="card-template"][value="${themeName}"]`);
+            if (radio) radio.checked = true;
 
-            document.getElementById('dash-active-template').innerText = activeThemeName;
-            showNotification(`Template diubah ke ${activeThemeName}`, 'success');
+            if(!skipCloudSave) window.showNotification(`Template diubah ke ${labelName}`, 'success');
         }
 
-        // --- ORIENTATION & VIEW TOGGLE ---
-        function toggleOrientation(mode) {
-            const front = document.getElementById('card-front');
-            const back = document.getElementById('card-back');
-            const cloneFront = document.getElementById('export-clone-front');
-            const cloneBack = document.getElementById('export-clone-back');
+        window.applySettings = async function() {
+            const settings = {
+                kop1: document.getElementById('set-kop1').value,
+                kop2: document.getElementById('set-kop2').value,
+                kop3: document.getElementById('set-kop3').value,
+                tempat: document.getElementById('set-tempat').value,
+                tanggal: document.getElementById('set-tanggal').value,
+                kepsek: document.getElementById('set-kepsek').value,
+                nip: document.getElementById('set-nip').value,
+                rules: document.getElementById('set-rules').value,
+                logoKiri: document.getElementById('out-logo-kiri').src,
+                logoKanan: document.getElementById('out-logo-kanan').src,
+                ttd: document.getElementById('out-ttd').src,
+                stempel: document.getElementById('out-stempel').src,
+                theme: window.activeThemeName
+            };
+
+            syncSettingsToUI(settings);
+
+            if (window.cloudEnabled && currentUser) {
+                try {
+                    const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'appSettings');
+                    await setDoc(settingsRef, settings);
+                    window.showNotification('Pengaturan disinkronkan ke Cloud!', 'success');
+                } catch (e) {
+                    console.error(e);
+                    window.showNotification('Gagal simpan ke Cloud', 'error');
+                }
+            } else {
+                window.showNotification('Pengaturan disimpan lokal', 'info');
+            }
+        }
+
+        // FUNGSI KOMPRESI GAMBAR (Penting agar tidak melampaui limit Firebase)
+        window.compressAndSetImage = function(file, imgElementIds, maxWidth, isPng = false) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const mimeType = isPng ? 'image/png' : 'image/jpeg';
+                    const quality = isPng ? undefined : 0.8; // Kualitas 80% untuk JPG
+                    const base64Data = canvas.toDataURL(mimeType, quality);
+                    
+                    imgElementIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.src = base64Data;
+                            el.classList.remove('hidden', 'opacity-0');
+                        }
+                    });
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        window.handlePhotoUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) window.compressAndSetImage(file, ['out-foto', 'exp-foto'], 300, false);
+        }
+
+        window.handleSettingImageUpload = function(event, targetId, makeVisible) {
+            const file = event.target.files[0];
+            if (file) {
+                let targetArray = [targetId];
+                if (targetId === 'out-logo-kiri') targetArray.push('exp-logo-kiri');
+                if (targetId === 'out-logo-kanan') targetArray.push('exp-logo-kanan');
+                if (targetId === 'out-ttd') targetArray.push('exp-ttd');
+                
+                // Gunakan PNG/Transparan untuk logo & TTD
+                window.compressAndSetImage(file, targetArray, 400, true);
+            }
+        }
+
+        window.handleStempelUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) window.compressAndSetImage(file, ['out-stempel', 'exp-stempel'], 300, true);
+        }
+
+        // ==========================================
+        // CARD INTERACTION & EXPORT LOGIC
+        // ==========================================
+        window.toggleOrientation = function(mode) {
+            const els = ['card-front', 'card-back', 'export-clone-front', 'export-clone-back'];
             const btnPot = document.getElementById('btn-ori-portrait');
             const btnLan = document.getElementById('btn-ori-landscape');
 
             if (mode === 'landscape') {
-                front.classList.add('landscape');
-                back.classList.add('landscape');
-                cloneFront.classList.add('landscape');
-                cloneBack.classList.add('landscape');
-                isPortrait = false;
+                els.forEach(id => document.getElementById(id).classList.add('landscape'));
+                window.isPortrait = false;
                 btnLan.className = 'flex-1 py-2 rounded-full bg-white text-green-800 font-bold shadow-md text-sm transition-all';
                 btnPot.className = 'flex-1 py-2 rounded-full text-white font-medium hover:bg-white/20 text-sm transition-all';
             } else {
-                front.classList.remove('landscape');
-                back.classList.remove('landscape');
-                cloneFront.classList.remove('landscape');
-                cloneBack.classList.remove('landscape');
-                isPortrait = true;
+                els.forEach(id => document.getElementById(id).classList.remove('landscape'));
+                window.isPortrait = true;
                 btnPot.className = 'flex-1 py-2 rounded-full bg-white text-green-800 font-bold shadow-md text-sm transition-all';
                 btnLan.className = 'flex-1 py-2 rounded-full text-white font-medium hover:bg-white/20 text-sm transition-all';
             }
         }
 
-        function toggleCardView(view) {
+        window.toggleCardView = function(view) {
             const front = document.getElementById('card-front');
             const back = document.getElementById('card-back');
             const btnFront = document.getElementById('btn-view-front');
             const btnBack = document.getElementById('btn-view-back');
 
             if (view === 'front') {
-                front.classList.remove('hidden');
-                front.classList.add('flex');
-                back.classList.add('hidden');
-                back.classList.remove('flex');
-                
+                front.classList.remove('hidden'); front.classList.add('flex');
+                back.classList.add('hidden'); back.classList.remove('flex');
                 btnFront.className = 'flex-1 py-2 rounded-full bg-white text-green-800 font-bold shadow-md text-sm transition-all';
                 btnBack.className = 'flex-1 py-2 rounded-full text-white font-medium hover:bg-white/20 text-sm transition-all';
-                isFrontView = true;
+                window.isFrontView = true;
             } else {
-                back.classList.remove('hidden');
-                back.classList.add('flex');
-                front.classList.add('hidden');
-                front.classList.remove('flex');
-                
+                back.classList.remove('hidden'); back.classList.add('flex');
+                front.classList.add('hidden'); front.classList.remove('flex');
                 btnBack.className = 'flex-1 py-2 rounded-full bg-white text-green-800 font-bold shadow-md text-sm transition-all';
                 btnFront.className = 'flex-1 py-2 rounded-full text-white font-medium hover:bg-white/20 text-sm transition-all';
-                isFrontView = false;
+                window.isFrontView = false;
             }
         }
 
-        // --- PREVIEW UPDATE LOGIC ---
-        function updatePreview() {
+        window.updatePreview = function() {
             const nama = document.getElementById('in-nama').value || 'Nama Siswa';
             const nisn = document.getElementById('in-nisn').value || '0000000000';
             const jk = document.getElementById('in-jk').value;
             const ttl = document.getElementById('in-ttl').value || '-';
             const alamat = document.getElementById('in-alamat').value || '-';
-            const fotoSrc = document.getElementById('out-foto').src;
 
-            // Update Front Card
-            document.getElementById('out-nama').innerText = nama;
-            document.getElementById('out-nisn').innerText = nisn;
-            document.getElementById('out-jk').innerText = jk;
-            document.getElementById('out-ttl').innerText = ttl;
-            document.getElementById('out-alamat').innerText = alamat;
-
-            // Update Export Package Clone
-            document.getElementById('exp-nama').innerText = nama;
-            document.getElementById('exp-nisn').innerText = nisn;
-            document.getElementById('exp-jk').innerText = jk;
-            document.getElementById('exp-ttl').innerText = ttl;
-            document.getElementById('exp-alamat').innerText = alamat;
-            document.getElementById('exp-foto').src = fotoSrc;
+            document.getElementById('out-nama').innerText = nama; document.getElementById('exp-nama').innerText = nama;
+            document.getElementById('out-nisn').innerText = nisn; document.getElementById('exp-nisn').innerText = nisn;
+            document.getElementById('out-jk').innerText = jk; document.getElementById('exp-jk').innerText = jk;
+            document.getElementById('out-ttl').innerText = ttl; document.getElementById('exp-ttl').innerText = ttl;
+            document.getElementById('out-alamat').innerText = alamat; document.getElementById('exp-alamat').innerText = alamat;
 
             const qrContainer = document.getElementById('out-qr');
             const expQrContainer = document.getElementById('exp-qr');
-            qrContainer.innerHTML = '';
-            expQrContainer.innerHTML = '';
+            qrContainer.innerHTML = ''; expQrContainer.innerHTML = '';
             
             const qrText = `${nama} - ${nisn}`;
-            
             if (typeof QRCode !== 'undefined') {
-                currentQR = new QRCode(qrContainer, {
-                    text: qrText, width: 46, height: 46, colorDark: "#0f4c3a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L
-                });
-                new QRCode(expQrContainer, {
-                    text: qrText, width: 46, height: 46, colorDark: "#0f4c3a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L
-                });
+                window.currentQR = new QRCode(qrContainer, { text: qrText, width: 46, height: 46, colorDark: "#0f4c3a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
+                new QRCode(expQrContainer, { text: qrText, width: 46, height: 46, colorDark: "#0f4c3a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
             }
         }
 
-        function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('out-foto').src = e.target.result;
-                    document.getElementById('exp-foto').src = e.target.result;
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // --- SETTINGS LOGIC ---
-        function handleSettingImageUpload(event, targetId, makeVisible) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imgEl = document.getElementById(targetId);
-                    imgEl.src = e.target.result;
-                    if (makeVisible) imgEl.classList.remove('opacity-0');
-
-                    // Synchronize with export clone
-                    if (targetId === 'out-logo-kiri') {
-                        document.getElementById('exp-logo-kiri').src = e.target.result;
-                        document.getElementById('exp-logo-kiri').classList.remove('opacity-0');
-                    } else if (targetId === 'out-logo-kanan') {
-                        document.getElementById('exp-logo-kanan').src = e.target.result;
-                        if (makeVisible) document.getElementById('exp-logo-kanan').classList.remove('opacity-0');
-                    } else if (targetId === 'out-ttd') {
-                        document.getElementById('exp-ttd').src = e.target.result;
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function handleStempelUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const stempelEl = document.getElementById('out-stempel');
-                    stempelEl.src = e.target.result;
-                    stempelEl.classList.remove('hidden');
-
-                    const expStempelEl = document.getElementById('exp-stempel');
-                    expStempelEl.src = e.target.result;
-                    expStempelEl.classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function applySettings() {
-            const kop1 = document.getElementById('set-kop1').value;
-            const kop2 = document.getElementById('set-kop2').value;
-            const kop3 = document.getElementById('set-kop3').value;
-            const tempat = document.getElementById('set-tempat').value;
-            const tanggal = document.getElementById('set-tanggal').value;
-            const kepsek = document.getElementById('set-kepsek').value;
-            const nip = document.getElementById('set-nip').value;
-            const rules = document.getElementById('set-rules').value;
-
-            document.getElementById('out-kop-1').innerText = kop1;
-            document.getElementById('out-kop-2').innerText = kop2;
-            document.getElementById('out-kop-3').innerText = kop3;
-            document.getElementById('out-tempat').innerText = tempat;
-            document.getElementById('out-tanggal').innerText = tanggal;
-            document.getElementById('out-kepsek-nama').innerText = kepsek;
-            document.getElementById('out-kepsek-nip').innerText = nip;
-            document.getElementById('out-rules').innerHTML = rules;
-
-            // Sync clone
-            document.getElementById('exp-kop-1').innerText = kop1;
-            document.getElementById('exp-kop-2').innerText = kop2;
-            document.getElementById('exp-kop-3').innerText = kop3;
-            document.getElementById('exp-tempat').innerText = tempat;
-            document.getElementById('exp-tanggal').innerText = tanggal;
-            document.getElementById('exp-kepsek-nama').innerText = kepsek;
-            document.getElementById('exp-kepsek-nip').innerText = nip;
-            document.getElementById('exp-rules').innerHTML = rules;
-
-            showNotification('Pengaturan desain berhasil disimpan!', 'success');
-        }
-
-        // --- EXPORT FULL PACKAGE (FRONT & BACK SIDE BY SIDE) ---
-        function exportFullCardPackage() {
+        window.exportFullCardPackage = function() {
             const loading = document.getElementById('loading');
-            loading.classList.remove('hidden');
-            loading.classList.add('flex');
-
-            // Sync TTD & Stempel images to clone before capture
-            document.getElementById('exp-ttd').src = document.getElementById('out-ttd').src;
-            const mainStempel = document.getElementById('out-stempel');
-            const expStempel = document.getElementById('exp-stempel');
-            if (!mainStempel.classList.contains('hidden')) {
-                expStempel.src = mainStempel.src;
-                expStempel.classList.remove('hidden');
-            }
+            loading.classList.remove('hidden'); loading.classList.add('flex');
 
             const packageContainer = document.getElementById('export-package-container');
             const studentName = document.getElementById('in-nama').value.replace(/[^a-zA-Z0-9]/g, '_') || 'Siswa';
-            const orientationName = isPortrait ? 'Portrait' : 'Landscape';
+            const orientationName = window.isPortrait ? 'Portrait' : 'Landscape';
 
             setTimeout(() => {
                 html2canvas(packageContainer, {
@@ -1398,14 +1491,12 @@
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     
-                    loading.classList.add('hidden');
-                    loading.classList.remove('flex');
-                    showNotification('Paket Kartu (Depan & Belakang) berhasil diunduh!', 'success');
+                    loading.classList.add('hidden'); loading.classList.remove('flex');
+                    window.showNotification('Paket Kartu (Depan & Belakang) berhasil diunduh!', 'success');
                 }).catch(err => {
                     console.error(err);
-                    loading.classList.add('hidden');
-                    loading.classList.remove('flex');
-                    showNotification('Terjadi kesalahan saat mengekspor paket gambar.', 'error');
+                    loading.classList.add('hidden'); loading.classList.remove('flex');
+                    window.showNotification('Gagal mengekspor gambar.', 'error');
                 });
             }, 600);
         }
